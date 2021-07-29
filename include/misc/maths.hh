@@ -4,6 +4,7 @@
 typedef float Vector2f[2];
 typedef float Vector3f[3];
 typedef float Vector4f[4];
+typedef float Vector3Aligned[4];
 
 typedef float Matrix4x4[4][4];
 

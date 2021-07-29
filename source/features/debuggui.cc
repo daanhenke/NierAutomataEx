@@ -4,15 +4,15 @@
 #include "misc/console.hh"
 #include "misc/maths.hh"
 #include "misc/gui.hh"
+#include "automata/entities.hh"
 
-typedef float Vector3Aligned[4];
 
 void DebugGuiRender()
 {
-    uintptr_t localPlayer = *reinterpret_cast<uintptr_t*>(GetGameObject<void>("LocalPlayerPtr"));
-    if (localPlayer == 0) return;
-    int *localPlayerObjectId = reinterpret_cast<int*>(localPlayer + 0x5B8);
-    Vector3Aligned *localPlayerPosition = reinterpret_cast<Vector3Aligned*>(localPlayer + 0x50);
+    Entity* localPlayer = *GetGameObject<Entity*>("LocalPlayerPtr");
+    if (localPlayer == nullptr) return;
+    int *localPlayerObjectId = localPlayer->GetObjectIdPtr();
+    Vector3Aligned *localPlayerPosition = localPlayer->GetPositionPtr();
 
     Vector2f screenPos = {0.f, 0.f};
     //bool isOnScreen = WorldToScreen(d3dDevice, *localPlayerPosition, &screenPos);
