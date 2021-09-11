@@ -4,7 +4,7 @@
 #include <cstdio>
 
 // For the developer console
-#define DEBUG
+//#define DEBUG
 
 // Logging macro
 #ifdef DEBUG

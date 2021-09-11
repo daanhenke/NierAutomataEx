@@ -4,8 +4,11 @@ project(AutomataEx)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
+add_subdirectory("old")
+
 add_subdirectory(DirectXMath)
 
+if (FALSE)
 add_library(AutomataEx SHARED
     source/mod.cc
 
@@ -32,3 +35,5 @@ target_include_directories(AutomataEx PUBLIC
 )
 
 target_link_libraries(AutomataEx DirectXMath)
+
+endif()
