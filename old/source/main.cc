@@ -45,41 +45,39 @@ void Exit()
 #include <vector>
 #include <string>
 #include <algorithm>
-std::vector<unsigned int> gUniqueEntityIds;
+
+EntityInfoList* list = nullptr;
+Entity* player_entity = nullptr;
 
 void LogEntities()
 {
     uintptr_t nier_handle = reinterpret_cast<uintptr_t>(GetModuleHandleA(nullptr));
-    EntityInfoList* list = reinterpret_cast<EntityInfoList*>((nier_handle + OffEntityInfoList));
 
-    Entity* player_entity = nullptr;
+    Log("Located EntityInfoList: %llx\n", list);
+    Log("Correct EntityInfoList: %llx\n", nier_handle + OffEntityInfoList);
 
-    for (unsigned int i = 0; i < list->item_count; i++)
+    while (true)
     {
-        auto entry = list->items[i];
-
-        if (entry.info == nullptr) continue;
-
-        if (std::find(gUniqueEntityIds.begin(), gUniqueEntityIds.end(), entry.info->object_id) == gUniqueEntityIds.end())
+        Sleep(100);
+        for (unsigned int i = 0; i < list->item_count; i++)
         {
-            gUniqueEntityIds.push_back(entry.info->object_id);
-            Log("Found new object ID: %x, name: '%s', ptr: %llx\n", entry.info->object_id, entry.info->entity_name, entry.info->entity);
-        }
-        
-        if (entry.info->entity == nullptr) continue;
+            auto entry = list->items[i];
 
-        if (true)
-        {
-            uintptr_t entity = (uintptr_t) entry.info->entity;
+            if (entry.info == nullptr) continue;
+            if (entry.info->entity == nullptr) continue;
 
-            auto modelInfo = *(ModelInfo**) (entity + OffEntityModelInfo);
-            auto hp = (int*)(entity + OffEntityHP);
+            uintptr_t entity = (uintptr_t)entry.info->entity;
+            
+            auto modelInfoPtr = (ModelInfo**)(entity + OffEntityModelInfo);
+            if (modelInfoPtr == nullptr) continue;
+            auto modelInfo = *modelInfoPtr;
 
-            Entity* ent = (Entity*) entity;
+            Entity* ent = (Entity*)entity;
 
             if (modelInfo == nullptr) continue;
 
             auto name = std::string(entry.info->entity_name);
+            //Log("Found an entity @ %llx, level: %x, also GetLevel @ %llx\n", ent, 0, &Entity::GetLevel);
             if (entry.info->object_id >= 0x20000 && entry.info->object_id < 0x30000 && player_entity != nullptr)
             {
                 if (ent->GetLevel() < player_entity->GetLevel())
@@ -90,10 +88,15 @@ void LogEntities()
             }
             else if (name == "Player")
             {
+                if (player_entity == nullptr)
+                {
+                    Log("Found player: %llx\n", ent);
+                }
                 player_entity = ent;
             }
         }
     }
+    
 }
 
 void Initialize()
@@ -110,20 +113,14 @@ void Initialize()
 
     Log("Window handle: %x\n", gGameWindowHandle);
 
-    while (true)
-    {
-        if (GetAsyncKeyState(VK_INSERT) & 1)
-        {
-        }
+    uintptr_t list_accessor = FindPattern("NierAutomata.exe", "74 35 8b c2 c1 f8 08 0f b7 c8 3b 0d") + 12;
+    unsigned int reloffset = *reinterpret_cast<unsigned int*>(list_accessor);
+    uintptr_t list_real_addr = (uintptr_t)(list_accessor + reloffset + 4);
 
-        if (GetAsyncKeyState(VK_END) & 1)
-        {
-            break;
-        }
+    Log("Found EntityInfoList the hopefully? crossplatform way: %llx\n", list_real_addr);
+    list = reinterpret_cast<EntityInfoList*>(list_real_addr);
 
-        LogEntities();
-        Sleep(10);
-    }
+    LogEntities();
 
     Log("Exiting...\n");
     

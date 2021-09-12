@@ -133,7 +133,7 @@ public:
     virtual void f101() = 0;
     virtual void f102() = 0;
     virtual void f103() = 0;
-    virtual void SetLevel(int level) = 0;
+    virtual void SetLevel(int level) = 0; // 7FF784114170
     virtual void f105() = 0;
     virtual void f106() = 0;
 };
