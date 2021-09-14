@@ -4,7 +4,7 @@
 #include <cstdio>
 
 // For the developer console
-//#define DEBUG
+#define DEBUG
 
 // Logging macro
 #ifdef DEBUG
@@ -46,19 +46,60 @@ void Exit()
 #include <string>
 #include <algorithm>
 
+#include "minhook.h"
+
 EntityInfoList* list = nullptr;
 Entity* player_entity = nullptr;
 
+typedef uint64_t(__fastcall* HashEntity_t)(char* entityName, uint64_t entityNameLength);
+HashEntity_t origHashEntity;
+
+//uint64_t __fastcall HashEntityHooked(char* entityName, uint64_t entityNameLength)
+//{
+//    static int cntr = 0;
+//    if (strcmp(entityName, "PL/9S") == 0)
+//    {
+//        Log("Overwriting 9S with A2?\n");
+//        if (cntr % 2 == 1)
+//        {
+//            entityName = "PL/A2";
+//            Log("Overwriting 9S with A2!!!\n");
+//        }
+//        cntr++;
+//    }
+//    //Log("Looking up entity: %s\n", entityName);
+//
+//    return origHashEntity(entityName, entityNameLength);
+//}
+
 void LogEntities()
 {
+    if (MH_Initialize() != MH_OK)
+    {
+        Log("Couldn't initialize minhook\n");
+        return;
+    }
+
     uintptr_t nier_handle = reinterpret_cast<uintptr_t>(GetModuleHandleA(nullptr));
 
     Log("Located EntityInfoList: %llx\n", list);
     Log("Correct EntityInfoList: %llx\n", nier_handle + OffEntityInfoList);
 
+    void* hashEntity = (char*) nier_handle + 0x28EBC0;
+    int* pCurrentPlayerId = (int*) ((char*)nier_handle + 0x11e1c04);
+
+    /*if (MH_CreateHook(hashEntity, &HashEntityHooked, reinterpret_cast<LPVOID*>(&origHashEntity)) != MH_OK)
+    {
+        Log("Failed to create hook\n");
+        return;
+    }
+
+    MH_EnableHook(hashEntity);*/
+
     while (true)
     {
         Sleep(100);
+        *pCurrentPlayerId = 65792;
         for (unsigned int i = 0; i < list->item_count; i++)
         {
             auto entry = list->items[i];

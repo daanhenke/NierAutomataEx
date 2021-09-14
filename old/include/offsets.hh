@@ -10,6 +10,7 @@ const int OffEntityModelInfo = 0x00540;
 typedef unsigned long long EntityHandle;
 
 typedef float Vector4[4];
+typedef Vector4 Vector3Aligned
 
 typedef struct ModelInfo
 {
