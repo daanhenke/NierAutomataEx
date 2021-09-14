@@ -1,14 +1,15 @@
 cmake_minimum_required(VERSION 3.19)
 project(AutomataEx)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
-add_subdirectory("old")
+#add_subdirectory("old")
 
+add_subdirectory(minhook)
 add_subdirectory(DirectXMath)
 
-if (FALSE)
+if (TRUE)
 add_library(AutomataEx SHARED
     source/mod.cc
 
@@ -17,8 +18,10 @@ add_library(AutomataEx SHARED
     source/misc/directx11.cc
     source/misc/gui.cc
     source/misc/maths.cc
+    source/misc/pattern.cc
 
     source/features/debuggui.cc
+    source/features/entityhacks.cc
 
     source/imgui/imgui.cpp
     source/imgui/imgui_draw.cpp
@@ -34,6 +37,6 @@ target_include_directories(AutomataEx PUBLIC
     include/imgui
 )
 
-target_link_libraries(AutomataEx DirectXMath)
+target_link_libraries(AutomataEx DirectXMath minhook)
 
 endif()

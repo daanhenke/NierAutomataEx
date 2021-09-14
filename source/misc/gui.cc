@@ -13,7 +13,7 @@ ID3D11Device *d3dDevice;
 ID3D11DeviceContext *d3dContext;
 ID3D11RenderTargetView *d3dRenderTarget;
 
-bool showMenu = true;
+bool showMenu = false;
 
 // ImGui doesn't export this by default, so we define it ourself
 IMGUI_IMPL_API LRESULT  ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -43,15 +43,6 @@ void GuiSetup(IDXGISwapChain *pChain)
     DXGI_SWAP_CHAIN_DESC desc;
     swapChain->GetDesc(&desc);
 
-    ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO();
-
-    // We are gaming
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad;
-
-    ImGui::StyleColorsDark();
-    io.Fonts->AddFontDefault();
-
     HWND gameWindowHandle = desc.OutputWindow;
 
     // Hook the game window's WndProc so we can handle input
@@ -67,34 +58,47 @@ void GuiSetup(IDXGISwapChain *pChain)
 
     d3dDevice->GetImmediateContext(&d3dContext);
 
-    // Initialize ImGui backends
-    ImGui_ImplWin32_Init(gameWindowHandle);
-    ImGui_ImplDX11_Init(d3dDevice, d3dContext);
-
     // Create render target
-    ID3D11Texture2D *buffer;
+    ID3D11Texture2D* buffer;
     swapChain->GetBuffer(0, IID_PPV_ARGS(&buffer));
     d3dDevice->CreateRenderTargetView(buffer, nullptr, &d3dRenderTarget);
     buffer->Release();
+
+    // Initialize ImGui
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+
+    // We are gaming
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad;
+
+    ImGui::StyleColorsDark();
+    io.Fonts->AddFontDefault();
+
+    ImGui_ImplWin32_Init(gameWindowHandle);
+    ImGui_ImplDX11_Init(d3dDevice, d3dContext);
 }
 
 void GuiRender()
 {
-    ImGui_ImplDX11_NewFrame();
-    ImGui_ImplWin32_NewFrame();
-    ImGui::NewFrame();
-
-    DebugGuiRender();
-
     if (showMenu)
     {
-        ImGui::ShowDemoWindow(&showMenu);
+        ImGui_ImplDX11_NewFrame();
+        ImGui_ImplWin32_NewFrame();
+        ImGui::NewFrame();
+
+        //ImGui::ShowDemoWindow(&showMenu);
+        DebugGuiRender();
+
+        ImGui::EndFrame();
+        ImGui::Render();
+
+        d3dContext->OMSetRenderTargets(1, &d3dRenderTarget, nullptr);
+
+        ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
     }
+}
 
-    ImGui::EndFrame();
-    ImGui::Render();
-
-    d3dContext->OMSetRenderTargets(1, &d3dRenderTarget, nullptr);
-
-    ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+void GuiLogPtr(std::string label, void* ptr)
+{
+    ImGui::InputScalar(label.c_str(), ImGuiDataType_U64, &ptr, 0, 0, "%llx", ImGuiInputTextFlags_CharsHexadecimal);
 }

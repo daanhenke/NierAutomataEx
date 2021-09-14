@@ -7,6 +7,9 @@ void UnloadMod();
 #include <string>
 #include <Windows.h>
 
+#include "config.hh"
+#include "automata/entities.hh"
+
 extern std::map<std::string, uintptr_t> gGameOffsets;
 inline uintptr_t GetGameOffset(std::string name)
 {
@@ -25,3 +28,10 @@ inline T *GetGameObject(std::string name)
 
     return reinterpret_cast<T*>(nierBase + offset);
 }
+
+extern EntityInfoList* gEntityList;
+extern Entity** gPlayerEntityPtr;
+
+Entity* GetPlayerEntity();
+
+void ApplyEntityMods();
