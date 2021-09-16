@@ -23,6 +23,8 @@ public:
     PropAtOffset(int, ObjectId, 0x5B8)
     PropAtOffset(ModelInfo*, ModelInfo, 0x540)
     PropAtOffset(EntityInfo*, EntityInfo, 0x610)
+    PropAtOffset(int, Health, 0x858)
+    PropAtOffset(int, MaxHealth, 0x85C)
 
     VirtualMethod(29, bool, IsAliveAndHasEntityInfo, (), (this))
     VirtualMethod(86, int, GetLevel, (), (this))
@@ -30,8 +32,22 @@ public:
 
     bool IsEnemy()
     {
-        // 00007FF6A40CFE60
-        return *GetVTablePtr() == 0x00007FF6A40AB888;
+        auto object_id = *GetObjectIdPtr();
+
+        if (object_id >= 0x20000 && object_id <= 0x30000)
+        {
+            switch (object_id)
+            {
+            // Birds
+            case 0x2a021:
+                return false;
+
+            default:
+                return true;
+            }
+        }
+
+        return false;
     }
 };
 

@@ -11,25 +11,22 @@ std::vector<Entity*> boostedEnemies;
 
 void OnNewEntity(Entity* entity)
 {
-	//ConsoleWriteColor(FOREGROUND_RED, "New entity: %llx\n", entity);
-
-	auto object_id = *entity->GetObjectIdPtr();
-	if (object_id >= 0x20000 && object_id <= 0x30000)
+	if (gConfig.EnableBuffedEnemies)
 	{
-		if (rand() % 5 == 0 || true)
+		if (entity->IsEnemy() && entity->IsAliveAndHasEntityInfo())
 		{
-			ConsoleWrite("Boosting an enemy %x @ %llx!\n", object_id, entity);
-			boostedEnemies.push_back(entity);
+			if (rand() % 3 == 0)
+			{
+				boostedEnemies.push_back(entity);
+			}
 		}
 	}
 }
 
 void OnTickEntity(Entity* entity)
 {
-	auto object_id = *entity->GetObjectIdPtr();
-
 	// Check if entity is an enemy
-	if (object_id >= 0x20000 && object_id <= 0x30000)
+	if (entity->IsEnemy())
 	{
 		auto player = GetPlayerEntity();
 
@@ -40,7 +37,7 @@ void OnTickEntity(Entity* entity)
 			auto playerLvl = player->GetLevel();
 			auto entLvl = entity->GetLevel();
 
-			if (entLvl < playerLvl)
+			if (entLvl < playerLvl - 1)
 			{
 				entity->SetLevel(playerLvl);
 			}
@@ -51,7 +48,9 @@ void OnTickEntity(Entity* entity)
 			auto modelInfo = *entity->GetModelInfoPtr();
 			if (modelInfo != nullptr && entity->IsAliveAndHasEntityInfo())
 			{
-				modelInfo->tint[0] = 64.f;
+				/**entity->GetMaxHealthPtr() = 13371337;
+				*entity->GetHealthPtr() = 13371337;*/
+				modelInfo->tint[0] = 32.f;
 			}
 		}
 	}

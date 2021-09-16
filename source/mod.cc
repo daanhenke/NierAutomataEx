@@ -7,6 +7,11 @@
 
 config_t gConfig =
 {
+    .EntityOverlay = {
+        .Enabled = false,
+        .MinObjectId = 0x20000,
+        .MaxObjectId = 0x30000
+    },
     .EnableLevelScaling = true,
 };
 

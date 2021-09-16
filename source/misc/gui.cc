@@ -27,7 +27,7 @@ LRESULT CALLBACK GuiWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     if (showMenu)
     {
         ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
-        return 1;
+        if (msg == WM_KEYDOWN || msg == WM_KEYUP || msg == WM_MOUSEMOVE) return 1;
     }
 
     // Make sure the game still receives input
@@ -58,11 +58,8 @@ void GuiSetup(IDXGISwapChain *pChain)
 
     d3dDevice->GetImmediateContext(&d3dContext);
 
-    // Create render target
-    ID3D11Texture2D* buffer;
-    swapChain->GetBuffer(0, IID_PPV_ARGS(&buffer));
-    d3dDevice->CreateRenderTargetView(buffer, nullptr, &d3dRenderTarget);
-    buffer->Release();
+    // Get render target
+    d3dContext->OMGetRenderTargets(1, &d3dRenderTarget, nullptr);
 
     // Initialize ImGui
     ImGui::CreateContext();
@@ -75,6 +72,16 @@ void GuiSetup(IDXGISwapChain *pChain)
     io.Fonts->AddFontDefault();
 
     ImGui_ImplWin32_Init(gameWindowHandle);
+    ImGui_ImplDX11_Init(d3dDevice, d3dContext);
+}
+
+void GuiPreResize(IDXGISwapChain* pChain)
+{
+    ImGui_ImplDX11_Shutdown();
+}
+
+void GuiPostResize(IDXGISwapChain* pChain)
+{   
     ImGui_ImplDX11_Init(d3dDevice, d3dContext);
 }
 

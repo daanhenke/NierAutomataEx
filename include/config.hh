@@ -7,7 +7,15 @@ typedef enum
 
 typedef struct
 {
-	bool EnableEntityOverlay;
+	struct
+	{
+		bool Enabled;
+		int MinObjectId;
+		int MaxObjectId;
+	} EntityOverlay;
+
+	bool EnableBuffedEnemies;
+
 	bool EnableLevelScaling;
 	bool EnablePlayerForcing;
 	player_choice_t PlayerForcingValue;

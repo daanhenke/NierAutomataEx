@@ -4,6 +4,8 @@
 #include <string>
 
 void GuiSetup(IDXGISwapChain *pChain);
+void GuiPreResize(IDXGISwapChain* pChain);
+void GuiPostResize(IDXGISwapChain* pChain);
 void GuiRender();
 
 void GuiLogPtr(std::string label, void* ptr);

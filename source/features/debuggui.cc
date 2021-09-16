@@ -25,6 +25,7 @@ void DebugGuiRender()
             if (ImGui::BeginTabItem("Difficulty & Balance"))
             {
                 ImGui::Checkbox("Enable level scaling", &gConfig.EnableLevelScaling);
+                ImGui::Checkbox("Enable buffed enemies (just glow atm)", &gConfig.EnableBuffedEnemies);
                 ImGui::EndTabItem();
             }
 
@@ -57,7 +58,10 @@ void DebugGuiRender()
             if (ImGui::BeginTabItem("Debug"))
             {
                 GuiLogPtr("PlayerPtr", GetPlayerEntity());
-                ImGui::Checkbox("Show entity overlay", &gConfig.EnableEntityOverlay);
+                ImGui::Checkbox("Show entity overlay", &gConfig.EntityOverlay.Enabled);
+                ImGui::InputScalar("Min obj id", ImGuiDataType_U32, &gConfig.EntityOverlay.MinObjectId, 0, 0, "%x", ImGuiInputTextFlags_CharsHexadecimal);
+                ImGui::InputScalar("Max obj id", ImGuiDataType_U32, &gConfig.EntityOverlay.MaxObjectId, 0, 0, "%x", ImGuiInputTextFlags_CharsHexadecimal);
+
                 ImGui::EndTabItem();
             }
 
@@ -67,30 +71,39 @@ void DebugGuiRender()
         ImGui::End();
     }
 
-    for (int i = 0; i < gEntityList->item_count; i++)
+    if (gConfig.EntityOverlay.Enabled)
     {
-        auto entry = gEntityList->items[i];
-        auto info = entry.info;
-
-        if (info == nullptr) continue;
-        auto entity = info->entity;
-        if (entity == nullptr) continue;
-
-        auto object_id = *entity->GetObjectIdPtr();
-        auto entinfo = *entity->GetEntityInfoPtr();
-        if (gConfig.EnableEntityOverlay)
+        for (int i = 0; i < gEntityList->item_count; i++)
         {
-            Vector2f winCoords;
-            bool renderPlayerWnd = WorldToScreen(*entity->GetPositionPtr(), &winCoords);
-            std::string winName = "ent" + std::to_string(reinterpret_cast<uintptr_t>(entity));
-            ImGui::SetNextWindowPos(ImVec2(winCoords[0], winCoords[1]));
-            ImGui::SetNextWindowSize(ImVec2(150, 60));
-            if (ImGui::Begin(winName.c_str(), nullptr, 1))
+            auto entry = gEntityList->items[i];
+            auto info = entry.info;
+
+            if (info == nullptr) continue;
+            auto entity = info->entity;
+            if (entity == nullptr) continue;
+
+            auto object_id = *entity->GetObjectIdPtr();
+            if (object_id >= gConfig.EntityOverlay.MinObjectId && object_id <= gConfig.EntityOverlay.MaxObjectId)
             {
-                ImGui::InputScalar("ID", ImGuiDataType_U32, &object_id, 0, 0, "%x", ImGuiInputTextFlags_CharsHexadecimal);
-                ImGui::InputText("Name", entinfo->entity_name, 32);
-                ImGui::End();
+                auto entinfo = *entity->GetEntityInfoPtr();
+
+                Vector2f winCoords;
+                bool renderPlayerWnd = WorldToScreen(*entity->GetPositionPtr(), &winCoords);
+                std::string winName = "ent" + std::to_string(reinterpret_cast<uintptr_t>(entity));
+                ImGui::SetNextWindowPos(ImVec2(winCoords[0], winCoords[1]));
+                ImGui::SetNextWindowSize(ImVec2(180, 150));
+                if (ImGui::Begin(winName.c_str(), nullptr, 1))
+                {
+
+                    ImGui::InputScalar("Ptr", ImGuiDataType_U64, &entity, 0, 0, "%llx", ImGuiInputTextFlags_CharsHexadecimal);
+                    ImGui::InputScalar("ID", ImGuiDataType_U32, &object_id, 0, 0, "%x", ImGuiInputTextFlags_CharsHexadecimal);
+                    ImGui::InputText("Name", entinfo->entity_name, 32);
+                    ImGui::InputInt("Health", entity->GetHealthPtr());
+                    ImGui::InputInt("Max Health", entity->GetMaxHealthPtr());
+                    ImGui::End();
+                }
             }
         }
     }
+    
 }
