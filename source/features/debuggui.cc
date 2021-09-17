@@ -83,9 +83,9 @@ void DebugGuiRender()
             if (entity == nullptr) continue;
 
             auto object_id = *entity->GetObjectIdPtr();
-            if (object_id >= gConfig.EntityOverlay.MinObjectId && object_id <= gConfig.EntityOverlay.MaxObjectId)
+            if (object_id >= gConfig.EntityOverlay.MinObjectId && object_id <= gConfig.EntityOverlay.MaxObjectId && entity->IsAliveAndHasEntityInfo())
             {
-                auto entinfo = *entity->GetEntityInfoPtr();
+                //auto entinfo = *entity->GetEntityInfoPtr();
 
                 Vector2f winCoords;
                 bool renderPlayerWnd = WorldToScreen(*entity->GetPositionPtr(), &winCoords);
@@ -97,7 +97,7 @@ void DebugGuiRender()
 
                     ImGui::InputScalar("Ptr", ImGuiDataType_U64, &entity, 0, 0, "%llx", ImGuiInputTextFlags_CharsHexadecimal);
                     ImGui::InputScalar("ID", ImGuiDataType_U32, &object_id, 0, 0, "%x", ImGuiInputTextFlags_CharsHexadecimal);
-                    ImGui::InputText("Name", entinfo->entity_name, 32);
+                    //ImGui::InputText("Name", entinfo->entity_name, 32);
                     ImGui::InputInt("Health", entity->GetHealthPtr());
                     ImGui::InputInt("Max Health", entity->GetMaxHealthPtr());
                     ImGui::End();

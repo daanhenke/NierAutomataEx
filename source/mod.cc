@@ -4,6 +4,9 @@
 #include "misc/console.hh"
 #include "misc/directx11.hh"
 #include "misc/pattern.hh"
+#include "automata/entities.hh"
+
+#include "MinHook.h"
 
 config_t gConfig =
 {
@@ -25,8 +28,37 @@ std::map<std::string, uintptr_t> gGameOffsets = {
 EntityInfoList* gEntityList;
 Entity** gPlayerEntityPtr;
 
+typedef void (__fastcall* EntityCreateFunc_t)(void* entity, int hp);
+EntityCreateFunc_t ogEntityCreateFunc = nullptr;
+
+void __fastcall HookedEntityCreateFunc(Entity* entity, int hp)
+{
+    ConsoleWriteColor(FOREGROUND_RED, "HookedEntityCreateFunc called: %llx\n", entity);
+    if (entity->IsEnemy())
+    {
+        hp *= 10;
+    }
+    return ogEntityCreateFunc(entity, hp);
+}
+
 void ModMain()
 {
+    if (MH_Initialize() != MH_OK)
+    {
+        ConsoleWriteColor(FOREGROUND_RED, "Failed to initialize minhook\n");
+        return;
+    }
+
+    char* hNier = (char*)GetModuleHandleA("NierAutomata.exe");
+    void* addrEntityCreateFunc = (void*) (hNier + 0x4FDB50);
+    if (MH_CreateHook(addrEntityCreateFunc, (LPVOID)HookedEntityCreateFunc, (LPVOID*)&ogEntityCreateFunc) != MH_OK)
+    {
+        ConsoleWriteColor(FOREGROUND_RED, "Cant create hook\n");
+        return;
+    }
+
+    MH_EnableHook(addrEntityCreateFunc);
+
     uintptr_t list_accessor = FindPattern("NierAutomata.exe", "74 35 8b c2 c1 f8 08 0f b7 c8 3b 0d") + 12;
     unsigned int reloffset = *reinterpret_cast<unsigned int*>(list_accessor);
     gEntityList = (EntityInfoList*)(list_accessor + reloffset + 4);
