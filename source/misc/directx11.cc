@@ -48,7 +48,6 @@ HRESULT __stdcall ResizeBuffers(IDXGISwapChain* swapChain, UINT bufferCount, UIN
     
     GuiPostResize(swapChain);
 
-
     return result;
 }
 
@@ -76,6 +75,7 @@ LRESULT CALLBACK DXWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 /*
  * Present is the DX function you want to hook if you want to render over your game's output
  * It's a method of IDXGSwapChain, so to obtain it's address we just make a temporary swap chain and steal it's vtable
+ * We also hook ResizeBuffers to figure out when resolution changes happen so we can reload imgui then
  */
 void HookPresent()
 {
@@ -96,21 +96,23 @@ void HookPresent()
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
     swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
-    D3D_FEATURE_LEVEL featureLevelReq = D3D_FEATURE_LEVEL_11_0;
-    UINT numFeatureLevels = 1;
-
     D3D_FEATURE_LEVEL  featureLevelSupported;
     HRESULT res;
     IDXGISwapChain *swapChain = nullptr;
     ID3D11Device *device = nullptr;
 
+    D3D_FEATURE_LEVEL levels[] = {
+        D3D_FEATURE_LEVEL_11_0,
+        D3D_FEATURE_LEVEL_10_1
+    };
+
     if (FAILED(res = D3D11CreateDeviceAndSwapChain(
         nullptr,
-        D3D_DRIVER_TYPE_REFERENCE,
+        D3D_DRIVER_TYPE_HARDWARE,
         nullptr,
         0,
-        &featureLevelReq,
-        numFeatureLevels,
+        levels,
+        sizeof(levels) / sizeof(D3D_FEATURE_LEVEL),
         D3D11_SDK_VERSION,
         &swapChainDesc,
         &swapChain,
@@ -119,10 +121,12 @@ void HookPresent()
         nullptr
     )))
     {
-        ConsoleWriteColor(FOREGROUND_RED, LogStr("Failed to initialize DirectX!"));
+        ConsoleWriteColor(FOREGROUND_RED, LogStr("Failed to initialize DirectX: %x\n", res));
         // TODO: DIE HERE
         return;
     }
+
+    ConsoleWriteColor(FOREGROUND_GREEN, "DirectX device created! Feature level: %s\n", featureLevelSupported == D3D_FEATURE_LEVEL_11_0 ? "11" : "10.1");
 
     // The first sizeof(void*) bytes of a class always contain a pointer to it's vtable
     // which is basically an array of method pointers
@@ -140,7 +144,6 @@ void HookPresent()
     vtable[8] = reinterpret_cast<uintptr_t>(Present);
     vtable[13] = reinterpret_cast<uintptr_t>(ResizeBuffers);
 
-    // TODO: CLEAN UP THE WINDOW & DIRECTX MESS WE JUST MADE
     swapChain->Release();
     device->Release();
 }
