@@ -9,15 +9,20 @@
 std::vector<Entity*> handledEntities;
 std::vector<Entity*> boostedEnemies;
 
+void(__fastcall* SetEntityHealthAndMaxHealth)(Entity* entity, int newHp) = reinterpret_cast<decltype(SetEntityHealthAndMaxHealth)>(GetGameObject<void>("Entity_SetMaxHealth"));
+
 void OnNewEntity(Entity* entity)
 {
 	if (gConfig.EnableBuffedEnemies)
 	{
 		if (entity->IsEnemy() && entity->IsAliveAndHasEntityInfo())
 		{
-			if (rand() % 3 == 0)
+			if (rand() % 1 == 0)
 			{
 				boostedEnemies.push_back(entity);
+				int hp = (*entity->GetHealthPtr()) * 10;
+				ConsoleWriteColor(FOREGROUND_BLUE, "Set entity hp: %d", hp);
+				SetEntityHealthAndMaxHealth(entity, hp);
 			}
 		}
 	}
@@ -113,7 +118,7 @@ void ApplyEntityMods()
 	for (auto currEnt : currentEntities)
 	{
 		handledEntities.push_back(currEnt);
-		OnNewEntity(currEnt);
+		//OnNewEntity(currEnt);
 		OnTickEntity(currEnt);
 	}
 

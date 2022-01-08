@@ -22,23 +22,31 @@ std::map<std::string, uintptr_t> gGameOffsets = {
     { "Camera", 0x1020870 },
     { "LocalPlayerPtr", 0x1020948},
     { "NextLoadPlayerIndex", 0x11E1C04},
-    { "W2S", 0x11553B0}
+    { "W2S", 0x11553B0},
+    { "Entity_SetMaxHealth", 0x4FDB50}
 };
 
 EntityInfoList* gEntityList;
 Entity** gPlayerEntityPtr;
 
 typedef void (__fastcall* EntityCreateFunc_t)(void* entity, int hp);
-EntityCreateFunc_t ogEntityCreateFunc = nullptr;
+typedef Entity* (__fastcall* SceneEntitySystem_SpawnEntity_t)(void* _this, const char* name, unsigned int id, void* something);
+SceneEntitySystem_SpawnEntity_t ogEntityCreateFunc = nullptr;
 
-void __fastcall HookedEntityCreateFunc(Entity* entity, int hp)
+void OnNewEntity(Entity* entity);
+Entity* __fastcall HookedEntityCreateFunc(void* _this, const char* name, int id, void* something)
 {
-    ConsoleWriteColor(FOREGROUND_RED, "HookedEntityCreateFunc called: %llx\n", entity);
-    if (entity->IsEnemy())
+    //ConsoleWriteColor(FOREGROUND_RED, "HookedEntityCreateFunc called: %s %x %llx\n", name, id, something);
+
+    if (id == 0x33000 || (unsigned int)id == 0x33000)
     {
-        hp *= 10;
+        ConsoleWrite("Found pod spawn: %x, %s\n", id, name);
+        ConsoleWrite("Create_t ptr: %llx\n", something);
     }
-    return ogEntityCreateFunc(entity, hp);
+
+    Entity* ent = ogEntityCreateFunc(_this, name, id, something);
+    OnNewEntity(ent);
+    return ent;
 }
 
 void ModMain()
@@ -50,7 +58,8 @@ void ModMain()
     }
 
     char* hNier = (char*)GetModuleHandleA("NierAutomata.exe");
-    void* addrEntityCreateFunc = (void*) (hNier + 0x4FDB50);
+    //void* addrEntityCreateFunc = (void*) (hNier + 0x4FDB50);
+    void* addrEntityCreateFunc = (void*) (hNier + 0x7459B0);
     if (MH_CreateHook(addrEntityCreateFunc, (LPVOID)HookedEntityCreateFunc, (LPVOID*)&ogEntityCreateFunc) != MH_OK)
     {
         ConsoleWriteColor(FOREGROUND_RED, "Cant create hook\n");
@@ -78,6 +87,10 @@ void ModMain()
 
 void LoadMod()
 {
+
+    // If we do our DirectX hook before the game gets to the main menu we crash horribly, should just detect when this happens instead of waiting but w/e
+    Sleep(5000);
+    
     ConsoleInitialize();
     DXHookStart();
 

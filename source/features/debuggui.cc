@@ -6,6 +6,9 @@
 #include "misc/gui.hh"
 #include "automata/entities.hh"
 #include <string>
+#include <vector>
+
+std::map<int, int> windowsAtLocations;
 
 std::map<std::string, player_choice_t> choosablePlayers =
 {
@@ -52,6 +55,24 @@ void DebugGuiRender()
                     ImGui::EndCombo();
                 }
 
+                if (ImGui::Button("Spawn pod"))
+                {
+                    char* hNier = (char*)GetModuleHandleA("NierAutomata.exe");
+                    typedef void* (__fastcall* SceneEntitySystem_SpawnEntity_t)(void* _this, const char* name, unsigned int id, void* something);
+                    SceneEntitySystem_SpawnEntity_t spawnEntity = (SceneEntitySystem_SpawnEntity_t) (hNier + 0x7459B0);
+
+                    void* gSceneEntitySystem = hNier + 0x1029558;
+
+                    typedef void(__fastcall* Meme_FillCreateStruct)(void* create_struct);
+                    Meme_FillCreateStruct fillCreate = (Meme_FillCreateStruct) (hNier + 0x2639F0);
+
+                    char createStruct[0x60];
+                    fillCreate(createStruct);
+
+                    void* result = spawnEntity(gSceneEntitySystem, "pl0000", 0x33000, createStruct);
+                    ConsoleWriteColor(FOREGROUND_GREEN, "Tried to spawn pod, possible buddy ptr: %llx", result);
+                }
+
                 ImGui::EndTabItem();
             }
 
@@ -73,6 +94,7 @@ void DebugGuiRender()
 
     if (gConfig.EntityOverlay.Enabled)
     {
+        windowsAtLocations.clear();
         for (int i = 0; i < gEntityList->item_count; i++)
         {
             auto entry = gEntityList->items[i];
@@ -90,7 +112,22 @@ void DebugGuiRender()
                 Vector2f winCoords;
                 bool renderPlayerWnd = WorldToScreen(*entity->GetPositionPtr(), &winCoords);
                 std::string winName = "ent" + std::to_string(reinterpret_cast<uintptr_t>(entity));
-                ImGui::SetNextWindowPos(ImVec2(winCoords[0], winCoords[1]));
+                ImVec2 winCoordsVec(winCoords[0], winCoords[1]);
+
+                int locationHash = static_cast<int>(winCoords[0]) + (static_cast<int>(winCoords[1]) * 5000);
+                if (windowsAtLocations.find(locationHash) != windowsAtLocations.end())
+                {
+                    auto offset = 10 * windowsAtLocations[locationHash];
+                    windowsAtLocations[locationHash]++;
+                    winCoordsVec.x += offset;
+                    winCoordsVec.y += offset / 2;
+                }
+                else
+                {
+                    windowsAtLocations[locationHash] = 1;
+                }
+
+                ImGui::SetNextWindowPos(winCoordsVec);
                 ImGui::SetNextWindowSize(ImVec2(180, 150));
                 if (ImGui::Begin(winName.c_str(), nullptr, 1))
                 {

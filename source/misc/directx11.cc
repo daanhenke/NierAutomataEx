@@ -101,18 +101,13 @@ void HookPresent()
     IDXGISwapChain *swapChain = nullptr;
     ID3D11Device *device = nullptr;
 
-    D3D_FEATURE_LEVEL levels[] = {
-        D3D_FEATURE_LEVEL_11_0,
-        D3D_FEATURE_LEVEL_10_1
-    };
-
     if (FAILED(res = D3D11CreateDeviceAndSwapChain(
         nullptr,
         D3D_DRIVER_TYPE_HARDWARE,
         nullptr,
         0,
-        levels,
-        sizeof(levels) / sizeof(D3D_FEATURE_LEVEL),
+        nullptr,
+        0,
         D3D11_SDK_VERSION,
         &swapChainDesc,
         &swapChain,

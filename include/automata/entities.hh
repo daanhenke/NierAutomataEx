@@ -79,3 +79,8 @@ typedef struct EntityInfoList
     unsigned int shift;
     EntityInfoListEntry* items;
 } EntityInfoList;
+
+typedef struct Create_t
+{
+
+} Create_t;
